@@ -1,0 +1,6 @@
+zuul:
+  routes:
+    SAMPLE-SERVICE: /**
+       
+server:
+  port: 8082

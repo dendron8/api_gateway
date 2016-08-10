@@ -1,0 +1,78 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'spring-boot'//spring boot support in gradle - package jars/wars as executables
+apply plugin: "io.spring.dependency-management" //maven-like dependency management
+apply plugin: 'docker'
+
+group = 'philhelm'
+
+task buildDocker(type: Docker, dependsOn: build) {
+	push = false
+	applicationName = 'api_gateway'
+	dockerfile = file('src/main/docker/Dockerfile')
+	doFirst {
+	  copy {
+		from jar
+		into stageDir
+	  }
+	}
+  }
+
+buildscript {
+	//this is for building your microservice with gradle.
+		repositories {
+			mavenCentral()
+		}
+		dependencies {
+			classpath("org.springframework.boot:spring-boot-gradle-plugin:1.2.7.RELEASE")
+			classpath("io.spring.gradle:dependency-management-plugin:0.5.6.RELEASE")
+			classpath('se.transmode.gradle:gradle-docker:1.2')
+		}
+	}
+	
+dependencyManagement {
+	imports {
+		mavenBom 'org.springframework:spring-framework-bom:4.2.3.RELEASE'
+		mavenBom 'org.springframework.cloud:spring-cloud-config:1.1.1.RELEASE'
+	}
+	
+}
+
+springBoot {
+	mainClass = "sample.gateway.ZuulGateway" //redundant if @SpringBootApplication used, but reads easy 
+  }
+
+sourceCompatibility = 1.8
+version = '1.0'
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Gradle Quickstart',
+                   'Implementation-Version': version
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'commons-collections', name: 'commons-collections', version: '3.2'
+	compile('org.springframework.boot:spring-boot-starter-web') //spring boot w tomcat default
+	compile('com.datastax.cassandra:cassandra-driver-core:3.0.0')
+	compile group: 'org.springframework.cloud', name: 'spring-cloud-starter-eureka', version: '1.1.4.RELEASE'
+	compile 'org.springframework.cloud:spring-cloud-starter-config:1.1.1.RELEASE'
+	compile 'org.springframework.cloud:spring-cloud-starter-zuul:1.1.5.RELEASE'
+	//compile("org.springframework.cloud:spring-cloud-starter-hystrix:1.1.2.RELEASE")
+	//compile("org.springframework.boot:spring-boot-starter-actuator:1.1.2.RELEASE")
+	//compile("org.springframework.cloud:spring-cloud-netflix-hystrix-dashboard:1.1.2.RELEASE")
+}
+
+
+
+uploadArchives {
+    repositories {
+       flatDir {
+           dirs 'repos'
+       }
+    }
+}
